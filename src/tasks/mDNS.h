@@ -8,16 +8,18 @@
 
 extern Config config;
 extern Logs logging;
+extern Memory task_mem;
 
-void mdns_bye(String esp_name)
+void mdns_bye()
 {
     MDNS.end();   
 }
 
 void mdns_check(String esp_name)
 {
-    Serial.println("mDNS check pour : " + esp_name);
-    IPAddress ip = MDNS.queryHost(esp_name.c_str());
+    String name = "pv-router-bd80.local";
+    Serial.println("mDNS check pour : " + name);
+    IPAddress ip = MDNS.queryHost(name);
     if (ip) {
         Serial.print("mDNS encore actif, IP trouvée : ");
         Serial.println(ip);
@@ -44,15 +46,25 @@ void mdns_hello(String esp_name)
     }
     
     Serial.println("mDNS démarré, attente avant vérification...");
-    delay(2000); // Attendre pour que mDNS soit bien en place
+    delay(2000); // Attendre pour que mDNS soit bien en place    
 
-    MDNS.addService("sunstain", "tcp", 80);
-    MDNS.addServiceTxt("sunstain", "tcp", "name", esp_name.c_str());
+    MDNS.addService("sunstain", "tcp", 80); 
+    /*String serviceInfo = 
+    "name=" + String(esp_name) + 
+    "|version=" + String(VERSION) + 
+    "|compilation=" + String(COMPILE_NAME) + 
+    "|fonction=router" + 
+    "|url=https://www.sunstain.fr" + 
+    "|update_url=https://ota.apper-solaire.org/ota.php";
+
+    MDNS.addServiceTxt("sunstain", "tcp", "info", serviceInfo.c_str());
+*/
+    MDNS.addServiceTxt("sunstain", "tcp", "name", esp_name.c_str());        
     MDNS.addServiceTxt("sunstain", "tcp", "version", VERSION);
     MDNS.addServiceTxt("sunstain", "tcp", "compilation", COMPILE_NAME);
     MDNS.addServiceTxt("sunstain", "tcp", "fonction", "router");
     MDNS.addServiceTxt("sunstain", "tcp", "url", "https://www.sunstain.fr");
-    MDNS.addServiceTxt("sunstain", "tcp", "update_url", "https://ota.apper-solaire.org/ota.php");    
+    MDNS.addServiceTxt("sunstain", "tcp", "update_url", "https://ota.apper-solaire.org/ota.php");       
 }
 
 bool mdns_search(String type, uint16_t port)
@@ -120,14 +132,15 @@ void mdns_discovery(void *parameter) // NOSONAR
     for (;;)
     {        
         if (WiFi.status() == WL_CONNECTED && (strcmp(config.dimmer, "") == 0 || strcmp(config.dimmer, "none") == 0))
-        {                       
+        {               
             /// recherche d'un dimmer
             if (!mdns_search("sunstain", 80))
             {
-                /// recherche de l'ancienne version dimmer  ( à supprimer 01/07/2025 )
-                mdns_search("http", 1308);
+                 /// recherche de l'ancienne version dimmer  ( à supprimer 01/07/2025 )
+               mdns_search("http", 1308);
             }
         }
+        task_mem.task_mdns_discovery = uxTaskGetStackHighWaterMark(nullptr);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 }
