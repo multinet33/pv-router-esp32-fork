@@ -88,8 +88,8 @@ TaskHandle_t myTaskdallasread;
 TaskHandle_t myTaskswitcholed;
 TaskHandle_t myTaskmeasureelectricity;
 TaskHandle_t myTaskupdatedimmer;
-TaskHandle_t myTaskssendtomqtt;
-
+TaskHandle_t myTasksendtomqtt;
+TaskHandle_t myTaskupdatetemp;
 
 //***********************************
 //************* Afficheur Oled
@@ -439,7 +439,7 @@ ntpinit();
     xTaskCreate(
       watchdog_memory,
       "watchdog_memory",  // Task name
-      6000,            // Stack size (bytes)
+      1200,            // 6000 Stack size (bytes)
       NULL,             // Parameter
       5,                // Task priority
       &myTaskwatchdogmemory          // Task handle
@@ -449,19 +449,20 @@ ntpinit();
   xTaskCreatePinnedToCore(
       mdns_discovery,
       "mdns_discovery",  // Task name
-      3000,            // Stack size (bytes)
+      900,            // 6000 Stack size (bytes)
       NULL,             // Parameter
       0,                // Task priority
       &myTaskmdnsdiscovery,          // Task handle
       ARDUINO_RUNNING_CORE
     );  
+    
 
 
      //// task pour remettre le wifi en route en cas de passage en mode AP
     xTaskCreate(
       keepWiFiAlive2,
       "keepWiFiAlive",  // Task name
-      6000,            // Stack size (bytes)
+      1200,            // 6000 Stack size (bytes)
       NULL,             // Parameter
       5,                // Task priority
       &myTaskkeepwifialive2          // Task handle
@@ -478,7 +479,7 @@ ntpinit();
       xTaskCreate(
       serial_read_task,
       "Serial Read",      // Task name
-      4000,            // Stack size (bytes)
+      1500,            // 4000 Stack size (bytes)
       NULL,             // Parameter
       1,                // Task priority
       &myTaskserialreadtask              // Task handle
@@ -501,7 +502,7 @@ ntpinit();
   xTaskCreatePinnedToCore(
     updateDisplay,
     "UpdateDisplay",  // Task name
-    5000,            // Stack size (bytes)
+    1800,            // 5000 Stack size (bytes)
     NULL,             // Parameter
     2,                // Task priority
     &myTaskupdatedisplay,             // Task handle
@@ -516,7 +517,7 @@ ntpinit();
     xTaskCreate(
       dallasread,
       "Dallas local temp",  // Task name
-      5000,                  // Stack size (bytes)
+      1200,                  // 5000 Stack size (bytes)
       NULL,                   // Parameter
       2,                      // Task priority
       &myTaskdallasread       // Task handle
@@ -535,7 +536,7 @@ ntpinit();
   xTaskCreate( 
     switchDisplay,
     "Swith Oled",  // Task name
-    5000,                  // Stack size (bytes)
+    2500,                  // 5000 Stack size (bytes)
     NULL,                   // Parameter
     2,                      // Task priority
     &myTaskswitcholed                    // Task handle
@@ -551,7 +552,7 @@ ntpinit();
    xTaskCreate(
     measureElectricity,
     "Measure electricity",  // Task name
-    8000,                  // Stack size (bytes)
+    4500,                  // 8000 Stack size (bytes)
     NULL,                   // Parameter
     7,                      // Task priority
     &myTaskmeasureelectricity                    // Task handle
@@ -565,7 +566,7 @@ ntpinit();
   xTaskCreate(
     updateDimmer,
     "Update Dimmer",  // Task name
-    5000,                  // Stack size (bytes)
+    2600,                  // 5000 Stack size (bytes)
     NULL,                   // Parameter
     4,                      // Task priority
     &myTaskupdatedimmer                    // Task handle
@@ -578,10 +579,10 @@ ntpinit();
       xTaskCreate(
         GetDImmerTemp,
         "Update temp",  // Task name
-        6000,                  // Stack size (bytes)
+        2000,                  // 6000 Stack size (bytes)
         NULL,                   // Parameter
         4,                      // Task priority
-        NULL                    // Task handle
+        &myTaskupdatetemp                    // Task handle
       );  
   }
 
@@ -592,10 +593,10 @@ ntpinit();
     xTaskCreate(
     send_to_mqtt,
     "Update MQTT",  // Task name
-    8000,                  // Stack size (bytes)
+    2500,                  // 8000 Stack size (bytes)
     NULL,                   // Parameter
     5,                      // Task priority
-    &myTaskssendtomqtt                    // Task handle
+    &myTasksendtomqtt                    // Task handle
   );  
 
   #endif
@@ -674,9 +675,9 @@ void loop()
     Serial.print("Stack min restante de myTaskmdnsdiscovery : ");
     Serial.println(uxTaskGetStackHighWaterMark(myTaskmdnsdiscovery));
   }
-  if (myTaskssendtomqtt != NULL) {
-    Serial.print("Stack min restante de myTaskssendtomqtt : ");
-    Serial.println(uxTaskGetStackHighWaterMark(myTaskssendtomqtt));
+  if (myTasksendtomqtt != NULL) {
+    Serial.print("Stack min restante de myTasksendtomqtt : ");
+    Serial.println(uxTaskGetStackHighWaterMark(myTasksendtomqtt));
   }
   if (myTaskupdatedimmer != NULL) {
     Serial.print("Stack min restante de myTaskupdatedimmer : ");
@@ -706,9 +707,15 @@ void loop()
     Serial.print("Stack min restante de myTaskkeepwifialive2 : ");
     Serial.println(uxTaskGetStackHighWaterMark(myTaskkeepwifialive2));
   }
-    if (myTaskwatchdogmemory != NULL) {
+  
+  if (myTaskwatchdogmemory != NULL) {
     Serial.print("Stack min restante de myTaskwatchdogmemory : ");
     Serial.println(uxTaskGetStackHighWaterMark(myTaskwatchdogmemory));
+  }
+
+  if (myTaskupdatetemp != NULL) {
+    Serial.print("Stack min restante de myTaskupdatetemp : ");
+    Serial.println(uxTaskGetStackHighWaterMark(myTaskupdatetemp));
   }
   
 
